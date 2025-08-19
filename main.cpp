@@ -1,27 +1,27 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 #include <iostream>
-using namespace std;
+#include <algorithm>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include "Shader.h"
 
 const char* vertexShaderSource = "#version 460 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in vec3 aColor;\n"
+"out vec3 ourColor;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   gl_Position = vec4(aPos, 1.0);\n"
+"   ourColor = aColor;\n"
 "}\0";
 
-const char* fragmentShaderSourceOrange = "#version 460 core\n"
+const char* fragmentShaderSource = "#version 460 core\n"
 "out vec4 FragColor;\n"
+"in vec3 ourColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\0";
-
-const char* fragmentShaderSourceBlue = "#version 460 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
+"   FragColor = vec4(ourColor, 1.0);\n"
 "}\0";
 
 void processInput(GLFWwindow* window)
@@ -35,7 +35,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void initShaders(unsigned int shaderProgram, unsigned int color)
+void initShaders(unsigned int shaderProgram)
 {
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER); //Creates a shader object
@@ -54,11 +54,7 @@ void initShaders(unsigned int shaderProgram, unsigned int color)
 
     unsigned int fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    if (color == 0) {
-        glShaderSource(fragmentShader, 1, &fragmentShaderSourceOrange, NULL);
-    } else {
-        glShaderSource(fragmentShader, 1, &fragmentShaderSourceBlue, NULL);
-    }
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -107,106 +103,70 @@ int main()
 
     glViewport(0, 0, 800, 600);
 
-    unsigned int shaderProgramOrange, shaderProgramBlue;
-    shaderProgramOrange = glCreateProgram();
-    shaderProgramBlue = glCreateProgram();
-    initShaders(shaderProgramOrange, 0);
-    initShaders(shaderProgramBlue, 1);
+    int nrAttributes;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+    std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
+
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram();
+    initShaders(shaderProgram);
+    glUseProgram(shaderProgram);
 
     float vertices[] = {
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f,
-         0.25f,  0.5f, 0.0f,
-         0.75f,  0.5f, 0.0f,
-         0.75f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f
+        // positions         // colors
+         0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,   // bottom left
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 0.0f    // top 
     };
-    unsigned int indices1[] = {  // note that we start from 0!
-        0, 1, 2,   // first triangle
-        3, 4, 5
-    };
-    unsigned int indices2[] = {  // note that we start from 0!
-        0, 1, 5,   // first triangle
-        3, 4, 2
-    };
-    unsigned int VAO1crazy, VAO1proper;
-    glGenVertexArrays(1, &VAO1crazy);
-    glGenVertexArrays(1, &VAO1proper);
-    unsigned int VBO1;
-	glGenBuffers(1, &VBO1); //Generates buffer objects and stores the IDs in VBO array
-    unsigned int EBOcrazy, EBOproper;
-    glGenBuffers(1, &EBOcrazy);
-    glGenBuffers(1, &EBOproper);
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    unsigned int VBO;
+	glGenBuffers(1, &VBO);
 
-    glBindVertexArray(VAO1crazy); //This keeps track of all the following configuration on VBO1
-    glBindBuffer(GL_ARRAY_BUFFER, VBO1); //Binds the buffer object to the GL_ARRAY_BUFFER
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //Copies data into the buffer on the GPU
-    //This tells the shader program how to read in the vertices contained in GL_ARRAY_BUFFER
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0); //By default vertices are disabled, maybe this means that they don't get rendered? So they need to be enabled.
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOcrazy);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices1), indices1, GL_STATIC_DRAW);
-
-    glBindVertexArray(VAO1proper);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOproper);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices2), indices2, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
 
-    /*
-    float EBOvertices[] = {
-     0.5f,  0.5f, 0.0f,  // top right
-     0.5f, -0.5f, 0.0f,  // bottom right
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    -0.5f,  0.5f, 0.0f,  // top left 
-     0.4f,  0.4f, 0.0f,
-    -0.4f, -0.4f, 0.0f
-    };
-    unsigned int EBOindices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3,    // second triangle
-        4, 5, 1
-    };
-    unsigned int VAO2;
-    glGenVertexArrays(1, &VAO2);
-    unsigned int VBO2;
-    glGenBuffers(1, &VBO2);
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    
-    glBindVertexArray(VAO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(EBOvertices), EBOvertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(EBOindices), EBOindices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    */
-
-    int oscilator = 0;
-
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (!glfwWindowShouldClose(window))
     {
 		processInput(window);
+        glUseProgram(shaderProgram);
 
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if (oscilator % 10000 < 5000) {
-            glUseProgram(shaderProgramOrange);
-            glBindVertexArray(VAO1proper);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        } else {
-            glBindVertexArray(VAO1crazy);
-            glUseProgram(shaderProgramBlue);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        float timeValue = (fmod(glfwGetTime(), 3.0));
+        float decimal = timeValue - ((int)timeValue);
+        float negDecimal = 1 - decimal;
+        switch ((int)timeValue) {
+        case 0:
+            vertices[3] = negDecimal; vertices[4] = decimal; vertices[5] = 0.0f;
+            vertices[9] = decimal; vertices[10] = 0.0f; vertices[11] = negDecimal;
+            vertices[15] = 0.0f; vertices[16] = negDecimal; vertices[17] = decimal;
+            break;
+        case 1:
+            vertices[3] = 0.0f; vertices[4] = negDecimal; vertices[5] = decimal;
+            vertices[9] = negDecimal; vertices[10] = decimal; vertices[11] = 0.0f;
+            vertices[15] = decimal; vertices[16] = 0.0f; vertices[17] = negDecimal;
+            break;
+        case 2:
+            vertices[3] = decimal; vertices[4] = 0.0f; vertices[5] = negDecimal;
+            vertices[9] = 0.0f; vertices[10] = negDecimal; vertices[11] = decimal;
+            vertices[15] = negDecimal; vertices[16] = decimal; vertices[17] = 0.0f;
+            break;
+        default: 
+            break;
         }
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        oscilator++;
     }
 
     glfwTerminate();
