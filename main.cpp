@@ -6,6 +6,9 @@
 #include <cmath>
 #include "Shader.h"
 #include "stb_image.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 void processInput(GLFWwindow* window)
 {
@@ -114,13 +117,33 @@ int main()
     {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
-        for (int i = 0; i < 4; i++)
+
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        ourShader.setMatrix4fv("transform", trans);
+        glBindTexture(GL_TEXTURE_2D, texture[1]);
+        glBindVertexArray(VAO[1]);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        float scalingFactor = sin(glfwGetTime());
+        trans = glm::scale(trans, glm::vec3(scalingFactor, scalingFactor, scalingFactor));
+        ourShader.setMatrix4fv("transform", trans);
+        glBindTexture(GL_TEXTURE_2D, texture[3]);
+        glBindVertexArray(VAO[3]);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        /*for (int i = 0; i < 4; i++)
         {
             glBindTexture(GL_TEXTURE_2D, texture[i]);
             glBindVertexArray(VAO[i]);
 
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        }
+        }*/
 
         glfwSwapBuffers(window);
         glfwPollEvents();
