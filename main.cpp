@@ -45,7 +45,9 @@ int main()
     }
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    glViewport(0, 0, 800, 600);
+    int globalwidth = 800;
+    int globalheight = 600;
+    glViewport(0, 0, globalwidth, globalheight);
 
     Shader ourShader("vShader.txt", "fShader.txt");
     ourShader.use();
@@ -62,9 +64,9 @@ int main()
     {
             // positions            //texture coords
         {
-             0.5f, -0.5f, -0.5f,    0.55f, 0.95f, // bottom right left
-             0.5f, -0.5f,  0.5f,    0.55f, 0.35f, // bottom right right
-             0.0f,  0.5f,  0.0f,    0.85f, 0.65f  // top 
+             0.5f, -0.5f, -0.5f,    0.85f, 0.45f, // bottom right left
+             0.5f, -0.5f,  0.5f,    0.25f, 0.45f, // bottom right right
+             0.0f,  0.5f,  0.0f,    0.55f, 0.90f  // top 
         },
         {
              0.5f, -0.5f,  0.5f,    1.0f,  0.28f, // bottom right front 
@@ -113,37 +115,30 @@ int main()
         glEnableVertexAttribArray(1);
     }
 
+    glEnable(GL_DEPTH_TEST);
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float) globalwidth / (float) globalheight, 0.1f, 100.0f);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(20.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    ourShader.setMatrix4fv("projection", proj);
+    ourShader.setMatrix4fv("view", view);
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        ourShader.setMatrix4fv("transform", trans);
-        glBindTexture(GL_TEXTURE_2D, texture[1]);
-        glBindVertexArray(VAO[1]);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
-        float scalingFactor = sin(glfwGetTime());
-        trans = glm::scale(trans, glm::vec3(scalingFactor, scalingFactor, scalingFactor));
-        ourShader.setMatrix4fv("transform", trans);
-        glBindTexture(GL_TEXTURE_2D, texture[3]);
-        glBindVertexArray(VAO[3]);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        /*for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
+            model = glm::mat4(1.0f);
+            model = glm::rotate(model, glm::radians(20.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::rotate(model, ((float)glfwGetTime()) * glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            ourShader.setMatrix4fv("model", model);
             glBindTexture(GL_TEXTURE_2D, texture[i]);
             glBindVertexArray(VAO[i]);
 
             glDrawArrays(GL_TRIANGLES, 0, 3);
-        }*/
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
