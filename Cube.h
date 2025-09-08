@@ -56,10 +56,18 @@ private:
     // Shader that will be applied to this cube, we need to know the shader class so that we can modify its uniform variables.
     Shader* shader;
 
+    void checkCollision() {
+
+    }
+
 public:
     glm::vec3 Position;
     // Is the player looking at this cube? true if yes (cube colored red), false if no (cube colored white).
-    bool targeted = false;
+    bool targeted;
+    bool isMoving;
+    bool isHeld;
+    glm::vec3 Velocity;
+    const char* Name;
 
     // This checks whether the line of sight (the line of the front vector) of the player intersects with any cube faces.
     bool isCubeTargeted(glm::vec3 cameraPos, glm::vec3 cameraFront) {
@@ -91,8 +99,13 @@ public:
     }
 
     // Upon construction load all the vertex data into a buffer for quick retrival later on.
-    Cube(float x, float y, float z, Shader& sha) : shader(&sha) {
+    Cube(float x, float y, float z, Shader& sha, const char* name) : shader(&sha) {
         Position = glm::vec3(x, y, z);
+        targeted = false;
+        isMoving = false;
+        isHeld = false;
+        Name = name;
+        Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
 
@@ -105,21 +118,37 @@ public:
     }
 
     void drawCube() {
-        // Load the buffer containing the cube vertex data.
+        // Load the buffer containing the cube vertex data. (Actually not necessary at the moment, since all objects use identical vertex data.
         glBindVertexArray(VAO);
 
         // This matrix translates the cubes vertex coordinates to its actual position.
         glm::mat4 model = glm::translate(glm::mat4(1.0f), Position);
         shader->setMatrix4fv("model", model);
 
-        // Sets the "targeted" uniform bool variable in the shader program, which changes to color to red.
+        // Sets the "color" uniform bool variable in the shader program, which changes to color to red.
         if (targeted) {
-            shader->setBool("targeted", true);
+            shader->setInt("color", 1);
         } else {
-            shader->setBool("targeted", false);
+            shader->setInt("color", 0);
+        }
+        if (isMoving) {
+            shader->setInt("color", 2);
+            // std::cout << this << " is moving" << std::endl;
         }
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+    bool processMovement(float dTime) {
+        Velocity += glm::vec3(0.0, -dTime*0.5, 0.0);
+        Position += Velocity;
+        if (Position.y < 0.5) {
+            Position.y = 0.5;
+            Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+            isMoving = false;
+            return false;
+        }
+        return true;
     }
 };
 

@@ -1,12 +1,20 @@
 #version 460 core
 out vec4 FragColor;
 
-uniform int targeted;
+uniform int color;
 
 void main()
 {
-    if (targeted > 0)
+    // Cubes colored grey (default).
+    if (color == 0)
+        FragColor = vec4(0.6, 0.6, 0.6, 1.0);
+    // Cubes colored red (if trageted/looked at).
+    if (color == 1)
         FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    else
-        FragColor = vec4(0.8, 0.8, 0.8, 1.0);
+    // Cubes colored blue (while moving).
+    if (color == 2)
+        FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+    // Only used for the crosshair, colored white.
+    if (color == 3)
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 }
