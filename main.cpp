@@ -148,8 +148,7 @@ int main()
         // Targeted Cubes are checked in order because the line of sight might intersect multiple cubes but only the closest should be targeted.
         for (int i = 0; i < cubes.size(); i++) {
             if (cubes[i]->isCubeTargeted(camera.Position, camera.Front)) {
-                if (targetedCube != cubes[i] && targetedCube) {
-                }
+                // if (targetedCube != cubes[i] && targetedCube) {}
                 prevTargetedCube = targetedCube;
                 targetedCube = cubes[i];
                 break;
@@ -157,6 +156,9 @@ int main()
             if (i == cubes.size()-1) {
                 targetedCube = nullptr;
             }
+        }
+        if (!prevHeld) {
+            prevTargetedCube = nullptr;
         }
 
         processInput(window, &movingCubes);
@@ -219,7 +221,7 @@ void processInput(GLFWwindow* window, std::set<Cube*>* movingCubes) {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         if (prevHeld && prevTargetedCube && prevTargetedCube != targetedCube) {
             prevTargetedCube->isMoving = true;
-            prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float) glfwGetTime() - lastMouseMov);
+            prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float)glfwGetTime() - lastMouseMov);
             movingCubes->insert(prevTargetedCube);
         }
         if (targetedCube) {

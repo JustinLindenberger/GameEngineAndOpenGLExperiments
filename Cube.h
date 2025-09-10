@@ -1,3 +1,6 @@
+#ifndef CUBE_H
+#define CUBE_H
+
 #include "glm/glm.hpp"
 #include <glad/glad.h>
 #include "Shader.h"
@@ -5,7 +8,7 @@
 #include <cmath>
 
 // Vertices for the triangles that compose the cube, each block of 6 corresponds to one face.
-const float vertices[] = {
+const float cubeVertices[] = {
         -0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,
          0.5f,  0.5f, -0.5f,
@@ -111,7 +114,7 @@ public:
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -152,3 +155,4 @@ public:
     }
 };
 
+#endif
