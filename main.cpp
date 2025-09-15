@@ -1,4 +1,4 @@
-﻿#include <glad/glad.h> 
+﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <algorithm>
@@ -74,8 +74,8 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
-    Shader shader("vShader.txt", "fShader.txt");
-    shader.use();
+    Shader plainShader("vShader.txt", "fShader.txt");
+    Shader lightShader("vLightShader.txt", "fLightShader.txt");
 
     // Vertex data for the crosshair.
     const float crossHairVert[] = {
@@ -105,15 +105,24 @@ int main()
     glEnableVertexAttribArray(0);
 
     // Initally places 9 cubes in a 3x3 grid.
-    Cube cube0(0.0f, 0.5f, 0.0f, shader, "cube0");
-    Cube cube1(1.5f, 0.5f, 1.5f, shader, "cube1");
-    Cube cube2(1.5f, 0.5f, 0.0f, shader, "cube2");
-    Cube cube3(1.5f, 0.5f, -1.5f, shader, "cube3");
-    Cube cube4(0.0f, 0.5f, -1.5f, shader, "cube4");
-    Cube cube5(-1.5f, 0.5f, -1.5f, shader, "cube5");
-    Cube cube6(-1.5f, 0.5f, 0.0f, shader, "cube6");
-    Cube cube7(-1.5f, 0.5f, 1.5f, shader, "cube7");
-    Cube cube8(0.0f, 0.5f, 1.5f, shader, "cube8");
+    Cube cube0(0.0f, 0.5f, 0.0f, lightShader, "cube0");
+    Cube cube1(1.5f, 0.5f, 1.5f, lightShader, "cube1");
+    Cube cube2(1.5f, 0.5f, 0.0f, lightShader, "cube2");
+    Cube cube3(1.5f, 0.5f, -1.5f, lightShader, "cube3");
+    Cube cube4(0.0f, 0.5f, -1.5f, lightShader, "cube4");
+    Cube cube5(-1.5f, 0.5f, -1.5f, lightShader, "cube5");
+    Cube cube6(-1.5f, 0.5f, 0.0f, lightShader, "cube6");
+    Cube cube7(-1.5f, 0.5f, 1.5f, lightShader, "cube7");
+    Cube cube8(0.0f, 0.5f, 1.5f, lightShader, "cube8");
+
+    Cube lightCube(0.0f, 4.0f, 1.5f, plainShader, "lightCube");
+
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    plainShader.use();
+    plainShader.setVec3("lightColor", lightColor);
+    lightShader.use();
+    lightShader.setVec3("lightColor", lightColor);
+    lightShader.setVec3("lightPos", lightCube.Position);
 
     // Matrix that projects all geometry to normalized device coordinates, which are required by openGL to draw shapes.
     glm::mat4 proj;
@@ -129,22 +138,18 @@ int main()
     */
     while (!glfwWindowShouldClose(window))
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
         float currentFrame = (float) glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        
-        // Retrieve the matrix that enforces the cameras viewing angle of the game world.
-        view = camera.GetViewMatrix();
-        shader.setMatrix4fv("view", view);
 
         std::sort(cubes.begin(), cubes.end(), sortCubes);
-
         // Targeted flag also determins cube color, so it needs to be reset so that cubes aren't all painted red over time. 
         for (int i = 0; i < cubes.size(); i++) {
             cubes[i]->targeted = false;
         }
+
         // Targeted Cubes are checked in order because the line of sight might intersect multiple cubes but only the closest should be targeted.
         for (int i = 0; i < cubes.size(); i++) {
             if (cubes[i]->isCubeTargeted(camera.Position, camera.Front)) {
@@ -153,7 +158,7 @@ int main()
                 targetedCube = cubes[i];
                 break;
             }
-            if (i == cubes.size()-1) {
+            if (i == cubes.size() - 1) {
                 targetedCube = nullptr;
             }
         }
@@ -174,19 +179,31 @@ int main()
             }
         }
 
+        // Retrieve the matrix that enforces the cameras viewing angle of the game world.
+        view = camera.GetViewMatrix();
         proj = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        shader.setMatrix4fv("projection", proj);
 
+        lightShader.use();
+        lightShader.setMatrix4fv("projection", proj);
+        lightShader.setMatrix4fv("view", view);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < cubes.size(); i++) {
             cubes[i]->drawCube();
         }
+        
+        plainShader.use();
+        glBindVertexArray(lightCube.VAO);
+        plainShader.setMatrix4fv("model", glm::translate(glm::mat4(1.0f), lightCube.Position));
+        plainShader.setMatrix4fv("projection", proj);
+        plainShader.setMatrix4fv("view", view);
+        plainShader.setInt("lightOrCrossHair", 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Draws the corsshair, need to reset all the matrices first so that we can draw over everything in the 2D plane of the screen.
-        shader.setMatrix4fv("model", glm::mat4(1.0f));
-        shader.setMatrix4fv("projection", glm::mat4(1.0f));
-        shader.setMatrix4fv("view", glm::mat4(1.0f));
-        shader.setInt("color", 3);
+        plainShader.setMatrix4fv("model", glm::mat4(1.0f));
+        plainShader.setMatrix4fv("projection", glm::mat4(1.0f));
+        plainShader.setMatrix4fv("view", glm::mat4(1.0f));
+        plainShader.setInt("lightOrCrossHair", 1);
         glBindVertexArray(crossHairVAO);
         glDrawArrays(GL_TRIANGLES, 0, 12);
 

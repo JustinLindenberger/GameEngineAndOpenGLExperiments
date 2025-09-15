@@ -1,20 +1,14 @@
 #version 460 core
 out vec4 FragColor;
 
-uniform int color;
+uniform int lightOrCrossHair;
+uniform vec3 lightColor;
 
 void main()
 {
-    // Cubes colored grey (default).
-    if (color == 0)
-        FragColor = vec4(0.6, 0.6, 0.6, 1.0);
-    // Cubes colored red (if trageted/looked at).
-    if (color == 1)
-        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    // Cubes colored blue (while moving).
-    if (color == 2)
-        FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-    // Only used for the crosshair, colored white.
-    if (color == 3)
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    if (lightOrCrossHair == 0)
+        FragColor = vec4(1.0);
+        FragColor = vec4(lightColor, 1.0);
+    if (lightOrCrossHair == 1)
+        FragColor = vec4(1.0);
 }

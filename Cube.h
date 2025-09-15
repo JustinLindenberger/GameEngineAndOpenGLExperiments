@@ -7,6 +7,53 @@
 #include <iostream>
 #include <cmath>
 
+// Vertices and normal vectors for the triangles that compose the cube, each block of 6 corresponds to one face.
+const float cubeVertices[] = {
+        // Back
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        // Front
+        -0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  1.0f,
+        // Left
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        // Right
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        // Bottom
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        // Top
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+};
+
+/*
 // Vertices for the triangles that compose the cube, each block of 6 corresponds to one face.
 const float cubeVertices[] = {
         -0.5f, -0.5f, -0.5f,
@@ -51,11 +98,11 @@ const float cubeVertices[] = {
         -0.5f,  0.5f,  0.5f,
         -0.5f,  0.5f, -0.5f
 };
+*/
 
 class Cube
 {
 private:
-    unsigned int VBO, VAO;
     // Shader that will be applied to this cube, we need to know the shader class so that we can modify its uniform variables.
     Shader* shader;
 
@@ -64,6 +111,7 @@ private:
     }
 
 public:
+    unsigned int VBO, VAO;
     glm::vec3 Position;
     // Is the player looking at this cube? true if yes (cube colored red), false if no (cube colored white).
     bool targeted;
@@ -92,7 +140,7 @@ public:
 
             // Check whether the intersections are within the cube face.
             if (interA1 > (Position[a1] - 0.5f) && interA1 < (Position[a1] + 0.5) &&
-                interA2 > (Position[a2] - 0.5f) && interA2 < (Position[a2] + 0.5)) {
+                interA2 >(Position[a2] - 0.5f) && interA2 < (Position[a2] + 0.5)) {
                 targeted = true;
                 return true;
             }
@@ -116,8 +164,10 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3* sizeof(float)));
+        glEnableVertexAttribArray(1);
     }
 
     void drawCube() {
@@ -131,7 +181,8 @@ public:
         // Sets the "color" uniform bool variable in the shader program, which changes to color to red.
         if (targeted) {
             shader->setInt("color", 1);
-        } else {
+        }
+        else {
             shader->setInt("color", 0);
         }
         if (isMoving) {
@@ -143,7 +194,7 @@ public:
     }
 
     bool processMovement(float dTime) {
-        Velocity += glm::vec3(0.0, -dTime*0.5, 0.0);
+        Velocity += glm::vec3(0.0, -dTime * 0.5, 0.0);
         Position += Velocity;
         if (Position.y < 0.5) {
             Position.y = 0.5;
