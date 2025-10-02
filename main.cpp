@@ -105,30 +105,29 @@ int main()
     glEnableVertexAttribArray(0);
 
     // Initally places 9 cubes in a 3x3 grid.
-    Cube cube0(0.0f, 0.5f, 0.0f, lightShader, "cube0");
-    Cube cube1(1.5f, 0.5f, 1.5f, lightShader, "cube1");
-    Cube cube2(1.5f, 0.5f, 0.0f, lightShader, "cube2");
-    Cube cube3(1.5f, 0.5f, -1.5f, lightShader, "cube3");
-    Cube cube4(0.0f, 0.5f, -1.5f, lightShader, "cube4");
-    Cube cube5(-1.5f, 0.5f, -1.5f, lightShader, "cube5");
-    Cube cube6(-1.5f, 0.5f, 0.0f, lightShader, "cube6");
-    Cube cube7(-1.5f, 0.5f, 1.5f, lightShader, "cube7");
-    Cube cube8(0.0f, 0.5f, 1.5f, lightShader, "cube8");
+    Cube cube0(0.0f, 0.5f, 0.0f, lightShader, "cube0", true);
+    Cube cube1(1.5f, 0.5f, 1.5f, lightShader, "cube1", true);
+    Cube cube2(1.5f, 0.5f, 0.0f, lightShader, "cube2", true);
+    Cube cube3(1.5f, 0.5f, -1.5f, lightShader, "cube3", true);
+    Cube cube4(0.0f, 0.5f, -1.5f, lightShader, "cube4", true);
+    Cube cube5(-1.5f, 0.5f, -1.5f, lightShader, "cube5", true);
+    Cube cube6(-1.5f, 0.5f, 0.0f, lightShader, "cube6", true);
+    Cube cube7(-1.5f, 0.5f, 1.5f, lightShader, "cube7", true);
+    Cube cube8(0.0f, 0.5f, 1.5f, lightShader, "cube8", true);
 
-    Cube lightCube(0.0f, 4.0f, 1.5f, plainShader, "lightCube");
+    Cube lightCube(0.0f, 4.0f, 1.5f, plainShader, "lightCube", false);
 
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     plainShader.use();
     plainShader.setVec3("lightColor", lightColor);
     lightShader.use();
     lightShader.setVec3("lightColor", lightColor);
-    lightShader.setVec3("lightPos", lightCube.Position);
 
     // Matrix that projects all geometry to normalized device coordinates, which are required by openGL to draw shapes.
     glm::mat4 proj;
     glm::mat4 view;
 
-    std::vector<Cube*> cubes = { &cube0, &cube1, &cube2, &cube3, &cube4, &cube5, &cube6, &cube7, &cube8 };
+    std::vector<Cube*> cubes = { &cube0, &cube1, &cube2, &cube3, &cube4, &cube5, &cube6, &cube7, &cube8, &lightCube};
     std::set<Cube*> movingCubes;
 
     /* This loop first calculates the time passed between frames (needed to scale camera movement), 
@@ -186,6 +185,8 @@ int main()
         lightShader.use();
         lightShader.setMatrix4fv("projection", proj);
         lightShader.setMatrix4fv("view", view);
+        lightShader.setVec3("viewPos", camera.Position);
+        lightShader.setVec3("lightPos", lightCube.Position);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < cubes.size(); i++) {
             cubes[i]->drawCube();
@@ -237,9 +238,11 @@ void processInput(GLFWwindow* window, std::set<Cube*>* movingCubes) {
     *  the ground. */
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         if (prevHeld && prevTargetedCube && prevTargetedCube != targetedCube) {
-            prevTargetedCube->isMoving = true;
-            prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float)glfwGetTime() - lastMouseMov);
-            movingCubes->insert(prevTargetedCube);
+            if (prevTargetedCube->movable) {
+                prevTargetedCube->isMoving = true;
+                prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float)glfwGetTime() - lastMouseMov);
+                movingCubes->insert(prevTargetedCube);
+            }
         }
         if (targetedCube) {
             targetedCube->isMoving = false;
@@ -251,9 +254,11 @@ void processInput(GLFWwindow* window, std::set<Cube*>* movingCubes) {
         prevHeld = true;
     } else {
         if (prevHeld && prevTargetedCube) {
-            prevTargetedCube->isMoving = true;
-            prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float)glfwGetTime() - lastMouseMov);
-            movingCubes->insert(prevTargetedCube);
+            if (prevTargetedCube->movable) {
+                prevTargetedCube->isMoving = true;
+                prevTargetedCube->Velocity += calculateAngularVelocity(prevFront, camera.Front, (float)glfwGetTime() - lastMouseMov);
+                movingCubes->insert(prevTargetedCube);
+            }
         }
         prevHeld = false;
     }

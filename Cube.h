@@ -117,6 +117,7 @@ public:
     bool targeted;
     bool isMoving;
     bool isHeld;
+    bool movable;
     glm::vec3 Velocity;
     const char* Name;
 
@@ -150,11 +151,12 @@ public:
     }
 
     // Upon construction load all the vertex data into a buffer for quick retrival later on.
-    Cube(float x, float y, float z, Shader& sha, const char* name) : shader(&sha) {
+    Cube(float x, float y, float z, Shader& sha, const char* name, bool mov) : shader(&sha) {
         Position = glm::vec3(x, y, z);
         targeted = false;
         isMoving = false;
         isHeld = false;
+        movable = mov;
         Name = name;
         Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
         glGenVertexArrays(1, &VAO);
