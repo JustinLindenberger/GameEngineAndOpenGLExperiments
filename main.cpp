@@ -122,6 +122,16 @@ int main()
     plainShader.setVec3("lightColor", lightColor);
     lightShader.use();
     lightShader.setVec3("lightColor", lightColor);
+    lightShader.setVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+    lightShader.setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken diffuse light a bit
+    lightShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    lightShader.setInt("material.diffuse", 0);
+    lightShader.setInt("material.specular", 1);
+    lightShader.setInt("material.emission", 2);
+    
+    // lightShader.setVec3("material.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+    // lightShader.setFloat("material.shininess", 64.0f);
 
     // Matrix that projects all geometry to normalized device coordinates, which are required by openGL to draw shapes.
     glm::mat4 proj;
