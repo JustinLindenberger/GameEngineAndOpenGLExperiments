@@ -123,8 +123,16 @@ int main()
     lightShader.use();
     lightShader.setVec3("lightColor", lightColor);
     lightShader.setVec3("light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-    lightShader.setVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken diffuse light a bit
+    lightShader.setVec3("light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     lightShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    lightShader.setFloat("light.constant", 1.0f);
+    lightShader.setFloat("light.linear", 0.1f);
+    lightShader.setFloat("light.quadratic", 0.03f);
+
+    lightShader.setVec3("light.direction", glm::vec3(0.0f, -1.0f, 0.0f));
+    lightShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+    lightShader.setFloat("light.outerCutOff", glm::cos(glm::radians(25.0f)));
 
     lightShader.setInt("material.diffuse", 0);
     lightShader.setInt("material.specular", 1);
